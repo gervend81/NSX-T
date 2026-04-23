@@ -1,9 +1,11 @@
 🛡️ NSX VM-to-IP Migration Prep Suite
+
 Goal: Transform existing NSX Security Groups on the Source environment from dynamic VM-Tag membership to a Hybrid membership (VM-Tags OR Static IPs). This ensures that when groups are migrated to a new destination via other tools, they already contain the necessary IP-based logic.
 
 📂 Script Components
 
 1-Export-NSX-VMGroupsToIP.ps1: Discovers VM-based groups and generates IP-based payloads.
+
 2-Import-NSX-VMGroupsToIP.ps1: Executes the creation of helper groups and patches the original groups.
 
 🚀 Step 1: Data Extraction & Transformation
