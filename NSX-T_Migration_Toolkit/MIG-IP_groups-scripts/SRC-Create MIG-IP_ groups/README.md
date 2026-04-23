@@ -55,10 +55,13 @@ PowerShell
 .\2-Import-NSX-VMGroupsToIP.ps1 -NSXManager <Source-NSX Manager> -InputFolder <Path> -RollbackVMGroups $true
 
 Logic: The script identifies groups containing MIG-IP_ references and restores them using the RawJson captured during the initial export.
+
 Safety: A manual confirmation prompt is required. You can also use -WhatIf with Rollback to see what would be reverted.
 
 🛠 Technical Implementation Details
+
 Dependency Management: The suite automatically calculates group-in-group dependencies to ensure nested groups are patched in the correct order.
+
 Idempotency: Both scripts are safe to run multiple times; the Import script will skip MIG-IP_ groups that already exist.
 
 Logging: All actions are written to a timestamped .log file within the output folder.
