@@ -1,0 +1,41 @@
+# Schoon de nieuwe omgeving op
+#.\Remove-NSX-AllCustomObjects.ps1 -NSXManager [nsx new] -RemoveGroups $true -RemoveServices $true -RemovePolicies $true -RemoveProfiles $true
+#bovenstaande niet gebruiken ivm zaken die toegevoegd zijn na de import (HCX)
+#gebruik onderstaande, eerst met -WhatIf voor een check en daarna zonder om daadwerkelijk de oude import op te schonen.
+#!!!! Let op! Wijzig de inputfolder naar de folder van de laatste export/import
+.\Remove-NSX-ImportedObjects.ps1 -NSXManager [nsx new] -InputFolder .\NSX_DFW_Export_20260420_085130 -RemovePolicies $true -RemoveGroups $true -RemoveServices $true -WhatIf
+#verwijder de custom context profiles
+.\Remove-NSX-AllCustomObjects.ps1 -NSXManager [nsx new] -RemoveProfiles $true
+
+# Exporteer groepen, services en policies uit de huidige omgeving
+.\Export-NSX-DFW.ps1 -NSXManager [nsx old] -ExportServices $true -ExportGroups $true -ExportPolicies $true -ExportProfiles $true
+
+# Importeer de groep Datacenter (dit gaat goed ivm latere import van groups vanwege skip action if exists)
+.\Import-NSX-DFW.ps1 -NSXManager [nsx new] -InputFolder .\NSX_DFW_Export_20260401_143703 -ImportGroups $true
+
+# Sanitize de CSV bestanden
+#!!!! Let op! Wijzig de inputfolder naar de folder van de laatste export
+.\Sanitize-NSX.ps1 -GroupsFile .\NSX_DFW_Export_20260420_110428\NSX_Groups.csv `
+                   -ServicesFile .\NSX_DFW_Export_20260420_110428\NSX_Services.csv `
+                   -ProfilesFile .\NSX_DFW_Export_20260420_110428\NSX_Profiles.csv `
+                   -RulesFile .\NSX_DFW_Export_20260420_110428\NSX_Rules.csv `
+                   -PoliciesFile .\NSX_DFW_Export_20260420_110428\NSX_Policies.csv
+
+# Handmatige edits
+# Verwijder POP2 uit Profiles_Sanitized.csv (niet bestaand protocol/app)
+
+# Importeer de sanitized CSV bestanden
+#!!!! Let op! Wijzig de inputfolder naar de folder van de laatste export
+.\Import-NSX-DFW.ps1 -NSXManager [nsx new] -InputFolder .\NSX_DFW_Export_20260420_110428 -ImportGroups $true -ImportServices $true -ImportProfiles $true -ImportPolicies $true
+
+# Vergelijk beide omgeving met elkaar (groups/services/rules/policies/profiles)
+# Review list van groepen die niet zijn te vergelijken
+#!!!! Let op! Wijzig de inputfolder naar de folder van de laatste export
+.\Compare-NSX-Migration.ps1 -SourceNSX [nsx old] `
+                            -DestNSX [nsx new] `
+                            -GroupMappingFile .\NSX_DFW_Export_20260420_110428\NSX_Groups_id_mapping.csv `
+                            -ServiceMappingFile .\NSX_DFW_Export_20260420_110428\NSX_Services_id_mapping.csv `
+			    -PolicyMappingFile .\NSX_DFW_Export_20260420_110428\NSX_Policies_id_mapping.csv `
+                            -RuleMappingFile .\NSX_DFW_Export_20260420_110428\NSX_Rules_id_mapping.csv
+                            
+			    #-GroupReviewList .\<exportfolder>\review-list.txt
