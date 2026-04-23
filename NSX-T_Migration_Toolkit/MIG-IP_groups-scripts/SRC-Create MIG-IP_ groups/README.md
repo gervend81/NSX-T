@@ -17,7 +17,9 @@ PowerShell
 What happens in this step:
 
 Discovery: Scans for custom groups using VirtualMachine criteria.
+
 IP Resolution: Fetches the live IPv4 list for those VMs (filtering out IPv6 and CIDRs).
+
 Payload Generation: Creates a NSX_VM_Groups-Final.csv containing the MIG-IP_ helper group definitions and the updated "Hybrid" JSON for your original groups.
 
 🔍 Step 2: The Dry Run (Validation)
