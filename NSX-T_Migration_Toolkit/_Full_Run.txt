@@ -1,0 +1,55 @@
+0.# maak de MIG-IP groepen aan op de bronomgeving
+# genereer de inputlijst van groepen
+.\DvG_MIG-IP-scripts\SRC-Create MIG-IP_ groups\1-Export-NSX-VMGroupsToIP.ps1 -NSXManager [Source-NSX Manager] -ExportVMGroups $true
+#maak de groepen aan
+#eerst testen
+.\DvG_MIG-IP-scripts\SRC-Create MIG-IP_ groups\2-Import-NSX-VMGroupsToIP.ps1 -NSXManager [Source-NSX Manager] -InputFolder [Path] -CreateMIGIPGroups $true -PatchVMGroups $true -WhatIf
+#daarna definitief
+#maak eerst de MIG-IP groepen aan
+.\DvG_MIG-IP-scripts\SRC-Create MIG-IP_ groups\2-Import-NSX-VMGroupsToIP.ps1 -NSXManager [Source-NSX Manager] -InputFolder [Path] -CreateMIGIPGroups $true
+#voeg de MIG-IP groepen toe aan de bestaande security groepen
+.\DvG_MIG-IP-scripts\SRC-Create MIG-IP_ groups\2-Import-NSX-VMGroupsToIP.ps1 -NSXManager [Source-NSX Manager] -InputFolder -PatchVMGroups $true
+
+1.# Schoon de nieuwe omgeving op
+#.\Remove-NSX-AllCustomObjects.ps1 -NSXManager nsxw.vcf.etz.net -RemoveGroups $true -RemoveServices $true -RemovePolicies $true -RemoveProfiles $true
+#bovenstaande niet gebruiken ivm zaken die toegevoegd zijn na de import (HCX)
+#gebruik onderstaande, eerst met -WhatIf voor een check en daarna zonder om daadwerkelijk de oude import op te schonen.
+#!!!! Let op! Wijzig de inputfolder naar de folder van de laatste export/import
+.\Remove-NSX-ImportedObjects.ps1 -NSXManager nsxw.vcf.etz.net -InputFolder .\NSX_DFW_Export_20260420_085130 -RemovePolicies $true -RemoveGroups $true -RemoveServices $true -WhatIf
+#verwijder de custom context profiles
+.\Remove-NSX-AllCustomObjects.ps1 -NSXManager nsxw.vcf.etz.net -RemoveProfiles $true
+
+2.# Exporteer groepen, services en policies uit de huidige omgeving
+.\Export-NSX-DFW.ps1 -NSXManager nsxwld.vcf.etz.net -ExportServices $true -ExportGroups $true -ExportPolicies $true -ExportProfiles $true
+
+3.# Importeer de groep Datacenter (dit gaat goed ivm latere import van groups vanwege skip action if exists)
+.\Import-NSX-DFW.ps1 -NSXManager nsxw.vcf.etz.net -InputFolder .\NSX_DFW_Export_20260401_143703 -ImportGroups $true
+
+4.# Sanitize de CSV bestanden
+#!!!! Let op! Wijzig de inputfolder naar de folder van de laatste export
+.\Sanitize-NSX.ps1 -GroupsFile .\NSX_DFW_Export_20260420_110428\NSX_Groups.csv `
+                   -ServicesFile .\NSX_DFW_Export_20260420_110428\NSX_Services.csv `
+                   -ProfilesFile .\NSX_DFW_Export_20260420_110428\NSX_Profiles.csv `
+                   -RulesFile .\NSX_DFW_Export_20260420_110428\NSX_Rules.csv `
+                   -PoliciesFile .\NSX_DFW_Export_20260420_110428\NSX_Policies.csv
+
+5.# Handmatige edits
+# Verwijder POP2 uit Profiles_Sanitized.csv (niet bestaand protocol/app)
+
+6.# Importeer de sanitized CSV bestanden
+#!!!! Let op! Wijzig de inputfolder naar de folder van de laatste export
+.\Import-NSX-DFW.ps1 -NSXManager nsxw.vcf.etz.net -InputFolder .\NSX_DFW_Export_20260420_110428 -ImportGroups $true -ImportServices $true -ImportProfiles $true -ImportPolicies $true
+
+7.# Vergelijk beide omgeving met elkaar (groups/services/rules/policies/profiles)
+# Review list van groepen die niet zijn te vergelijken
+#!!!! Let op! Wijzig de inputfolder naar de folder van de laatste export
+.\Compare-NSX-Migration.ps1 -SourceNSX nsxwld.vcf.etz.net `
+                            -DestNSX nsxw.vcf.etz.net `
+                            -GroupMappingFile .\NSX_DFW_Export_20260420_110428\NSX_Groups_id_mapping.csv `
+                            -ServiceMappingFile .\NSX_DFW_Export_20260420_110428\NSX_Services_id_mapping.csv `
+			    -PolicyMappingFile .\NSX_DFW_Export_20260420_110428\NSX_Policies_id_mapping.csv `
+                            -RuleMappingFile .\NSX_DFW_Export_20260420_110428\NSX_Rules_id_mapping.csv
+                            
+			    #-GroupReviewList .\<exportfolder>\review-list.txt
+
+8.# na migratie en goedkeuring de MIG-IP groepen verwijderen in de doelomgeving
