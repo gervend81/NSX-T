@@ -26,7 +26,7 @@ Payload Generation: Creates a NSX_VM_Groups-Final.csv containing the MIG-IP_ hel
 Before making any changes to your production NSX environment, it is highly recommended to perform a Dry Run. By appending the -WhatIf parameter, the script will simulate the entire process and report exactly what it would do without sending any write/patch commands to the API.
 
 PowerShell
-.\2-Import-NSX-VMGroupsToIP.ps1 -NSXManager [Source-NSX Manager] -InputFolder <Path> -CreateMIGIPGroups $true -PatchVMGroups $true -WhatIf
+.\2-Import-NSX-VMGroupsToIP.ps1 -NSXManager [Source-NSX Manager] -InputFolder [Path] -CreateMIGIPGroups $true -PatchVMGroups $true -WhatIf
 
 Check the Logs: The summary at the end of the log will show "WhatIf" counts for Created and Patched groups.
 Verify Logic: Review the console output to ensure the dependency sorter is ordering your groups correctly.
@@ -38,7 +38,7 @@ Stage A: Create Helper Groups
 Creates the standalone IP-address groups (prefixed with MIG-IP_). These are the targets for the new logic.
 
 PowerShell
-.\2-Import-NSX-VMGroupsToIP.ps1 -NSXManager [Source-NSX Manager] -InputFolder <Path> -CreateMIGIPGroups $true
+.\2-Import-NSX-VMGroupsToIP.ps1 -NSXManager [Source-NSX Manager] -InputFolder [Path] -CreateMIGIPGroups $true
 
 Stage B: Patch Original Groups
 Updates your production Security Groups on the source to the "Hybrid" state.
@@ -52,7 +52,7 @@ Result: Your groups now function using either the original VM Tags OR the newly 
 If you need to revert the source environment to its original VM-only state:
 
 PowerShell
-.\2-Import-NSX-VMGroupsToIP.ps1 -NSXManager [Source-NSX Manager] -InputFolder <Path> -RollbackVMGroups $true
+.\2-Import-NSX-VMGroupsToIP.ps1 -NSXManager [Source-NSX Manager] -InputFolder [Path] -RollbackVMGroups $true
 
 Logic: The script identifies groups containing MIG-IP_ references and restores them using the RawJson captured during the initial export.
 
